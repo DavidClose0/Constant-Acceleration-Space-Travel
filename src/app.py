@@ -133,7 +133,7 @@ def render_results_page():
 
     # Calculations
     travel_time = 2 * (distance / acceleration) ** 0.5
-    max_velocity = acceleration * (travel_time / 2)
+    max_velocity = (acceleration * distance) ** 0.5
 
     # Throw error if max velocity exceeds speed of light
     if max_velocity >= 299792458:
@@ -153,21 +153,75 @@ def render_results_page():
     liftoff_power_dec = Decimal("0.5") * total_mass_dec * acceleration_dec * v_e_dec
 
     # Display results
-    st.write(f"**Travel time:** {format_time(travel_time)}")
+    st.write(f"**Travel time:** {format_time(travel_time)}")    
+    with st.expander("Show calculation"):
+        st.latex(r'''
+        \text{Use the kinematic equation:} \\
+        x(t) = v_0 t + \frac{1}{2}at^2 \\
+        \text{For the first half, distance } d_{half} = \frac{d_{total}}{2}, v_0=0. \\
+        \text{Let } t_{half} \text{ be the time for this half:} \\
+        d_{half} = \frac{1}{2} a t_{half}^2 \implies t_{half} = \sqrt{\frac{2d_{half}}{a}} \\
+        t_{total} = 2 \cdot t_{half} = 2 \sqrt{\frac{2d_{half}}{a}} \\
+        t_{total} = 2 \sqrt{\frac{2(d_{total}/2)}{a}} = 2\sqrt{\frac{d_{total}}{a}}
+        ''')
+
     st.write(f"**Maximum velocity:** {max_velocity:,.2f} m/s "
              f"({(max_velocity / 299792458) * 100:.6f}% c)")
+    with st.expander("Show calculation"):
+        st.latex(r'''
+        \text{Use the kinematic equation:} \\
+        v(t) = v_0 + at \\
+        \text{Max velocity is reached after done accelerating, at } t_{half}, \text{ with } v_0=0: \\
+        v_{max} = a t_{half} \\
+        \text{Substitute } t_{half} = \sqrt{\frac{d_{total}}{a}}: \\
+        v_{max} = a \sqrt{\frac{d_{total}}{a}} = \sqrt{a^2 \frac{d_{total}}{a}} = \sqrt{a d_{total}}
+        ''')
+
     if fuel_mass_dec > 1e6:
         st.write(f"**Fuel mass required:** {fuel_mass_dec:.2e} kg")
     else:
         st.write(f"**Fuel mass required:** {fuel_mass_dec:,.2f} kg")
+    with st.expander("Show calculation"):
+        st.latex(r'''
+        \text{Use the rocket equation:} \\
+        \Delta v = v_e \ln\left(\frac{m_{initial}}{m_{final}}\right) \\
+        \text{Total } \Delta v \text{ includes acceleration and deceleration halves:} \quad \Delta v_{total} = 2v_{max} \\
+        \text{The final mass is the dry mass:} \quad m_{final} = m_{dry} \\
+        2v_{max} = v_e \ln\left(\frac{m_{initial}}{m_{dry}}\right) \\
+        m_{initial} = m_{dry} \cdot e^{\left(\frac{2v_{max}}{v_e}\right)} \\
+        \text{Fuel mass is the difference between initial and dry mass:} \\
+        m_{fuel} = m_{initial} - m_{dry} = m_{dry} \left( e^{\left(\frac{2v_{max}}{v_e}\right)} - 1 \right)
+        ''')
+
     if total_energy_dec > 1e6:
         st.write(f"**Total energy usage:** {total_energy_dec:.2e} J")
     else:
         st.write(f"**Total energy usage:** {total_energy_dec:,.2f} J")
+    with st.expander("Show calculation"):
+        st.latex(r'''
+        \text{Use the kinetic energy formula:} \\
+        E = \frac{1}{2}mv^2 \\
+        \text{The total mass of the fuel } m_{fuel} \text{ is expelled at effective exhaust velocity } v_e. \\
+        E_{total} = \frac{1}{2} m_{fuel} v_e^2
+        ''')
+
     if liftoff_power_dec > 1e6:
         st.write(f"**Liftoff power:** {liftoff_power_dec:.2e} W")
     else:
         st.write(f"**Liftoff power:** {liftoff_power_dec:,.2f} W")
+    with st.expander("Show calculation"):
+        st.latex(r'''
+        \text{Power is the kinetic energy imparted to the exhaust per second:} \\
+        P = \frac{1}{2} \dot{m} v_e^2 \quad (\text{where } \dot{m} \text{ is mass flow rate}) \\
+        \text{Thrust is given by: } F = \dot{m} v_e \implies \dot{m} = \frac{F}{v_e} \\
+        \text{For constant acceleration, thrust at time t is: } F(t) = m(t) \cdot a \\
+        \text{At liftoff (t=0), mass is at its maximum, } m_{initial}: \\
+        F_0 = m_{initial} \cdot a \\
+        \text{Substitute } F_0 \text{ to find the initial power } P_0: \\
+        P_0 = \frac{1}{2} \left(\frac{F_0}{v_e}\right) v_e^2 = \frac{1}{2} F_0 v_e = \frac{1}{2} (m_{initial}) a v_e \\
+        \text{Substitute } m_{initial} = m_{dry} + m_{fuel}: \\
+        P_0 = \frac{1}{2} (m_{dry} + m_{fuel}) a v_e
+        ''')
     
 if st.session_state.page == "calculator":
     render_calculator_page()
